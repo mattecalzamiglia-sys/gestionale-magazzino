@@ -1,0 +1,19 @@
+services:
+  # Backend Web Service
+  - type: web
+    name: gestionale-backend
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGIN
+        value: "*"
+    healthCheckPath: /api/health
