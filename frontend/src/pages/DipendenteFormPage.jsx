@@ -32,10 +32,17 @@ const DipendenteFormPage = () => {
       setLoading(true);
       const response = await api.get(`/anagrafiche/dipendenti/${id}`);
       const data = response.data;
-      if (data.data_assunzione) {
-        data.data_assunzione = data.data_assunzione.split('T')[0];
-      }
-      setFormData(data);
+      // Converti tutti i null in stringhe vuote per i campi input
+      setFormData({
+        nome: data.nome || '',
+        cognome: data.cognome || '',
+        email: data.email || '',
+        telefono: data.telefono || '',
+        qualifica: data.qualifica || '',
+        costo_orario: data.costo_orario ? String(data.costo_orario) : '',
+        data_assunzione: data.data_assunzione ? data.data_assunzione.split('T')[0] : '',
+        note: data.note || ''
+      });
     } catch (err) {
       setError('Errore nel caricamento del dipendente');
       console.error(err);
@@ -58,10 +65,16 @@ const DipendenteFormPage = () => {
     setError(null);
 
     try {
+      // Converti costo_orario in numero se presente, altrimenti null
+      const dataToSend = {
+        ...formData,
+        costo_orario: formData.costo_orario && formData.costo_orario !== '' ? parseFloat(formData.costo_orario) : null
+      };
+
       if (isEdit) {
-        await api.put(`/anagrafiche/dipendenti/${id}`, formData);
+        await api.put(`/anagrafiche/dipendenti/${id}`, dataToSend);
       } else {
-        await api.post('/anagrafiche/dipendenti', formData);
+        await api.post('/anagrafiche/dipendenti', dataToSend);
       }
       navigate('/anagrafiche/dipendenti');
     } catch (err) {

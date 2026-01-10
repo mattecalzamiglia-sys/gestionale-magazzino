@@ -74,10 +74,19 @@ const RicambioFormPage = () => {
     setError(null);
 
     try {
+      // Converti i campi numerici da stringa a numero
+      const dataToSend = {
+        ...formData,
+        quantita: parseFloat(formData.quantita) || 0,
+        prezzo_unitario: parseFloat(formData.prezzo_unitario) || 0,
+        scorta_minima: formData.scorta_minima && formData.scorta_minima !== '' ? parseFloat(formData.scorta_minima) : null,
+        fornitore_id: formData.fornitore_id && formData.fornitore_id !== '' ? parseInt(formData.fornitore_id) : null
+      };
+
       if (isEdit) {
-        await api.put(`/ricambi/${id}`, formData);
+        await api.put(`/ricambi/${id}`, dataToSend);
       } else {
-        await api.post('/ricambi', formData);
+        await api.post('/ricambi', dataToSend);
       }
       navigate('/magazzino');
     } catch (err) {

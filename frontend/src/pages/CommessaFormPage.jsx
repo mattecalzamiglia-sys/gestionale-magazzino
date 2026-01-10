@@ -73,10 +73,16 @@ const CommessaFormPage = () => {
     setError(null);
 
     try {
+      // Converti cliente_id in numero se presente, altrimenti null
+      const dataToSend = {
+        ...formData,
+        cliente_id: formData.cliente_id && formData.cliente_id !== '' ? parseInt(formData.cliente_id) : null
+      };
+
       if (isEdit) {
-        await api.put(`/commesse/${id}`, formData);
+        await api.put(`/commesse/${id}`, dataToSend);
       } else {
-        await api.post('/commesse', formData);
+        await api.post('/commesse', dataToSend);
       }
       navigate('/commesse');
     } catch (err) {
