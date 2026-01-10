@@ -10,10 +10,32 @@ const anagraficheRoutes = require('./routes/anagrafiche');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// Middleware CORS aggiornato - accetta sia localhost che frontend Render
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://gestionale-frontend.onrender.com',
+  process.env.CORS_ORIGIN
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000'
+  origin: function (origin, callback) {
+    // Permetti richieste senza origin (es. Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    // Permetti qualsiasi origin se CORS_ORIGIN è * 
+    if (process.env.CORS_ORIGIN === '*') return callback(null, true);
+    
+    // Controlla se l'origin è nella whitelist
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -48,7 +70,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server in ascolto sulla porta ${PORT}`);
   console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 CORS abilitato per: ${process.env.CORS_ORIGIN || 'http://localhost:3000'}`);
+  console.log(`🌐 CORS abilitato per: ${allowedOrigins.join(', ')}`);
 });
 
 module.exports = app;
