@@ -142,7 +142,7 @@ const MagazzinoPage = () => {
                   Descrizione
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Quantità
+                  QuantitÃ 
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Prezzo
@@ -174,7 +174,7 @@ const MagazzinoPage = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    €{parseFloat(ricambio.prezzo_unitario).toFixed(2)}
+                    €{ricambio.prezzo_unitario != null ? parseFloat(ricambio.prezzo_unitario).toFixed(2) : '0.00'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {ricambio.ubicazione || '-'}
