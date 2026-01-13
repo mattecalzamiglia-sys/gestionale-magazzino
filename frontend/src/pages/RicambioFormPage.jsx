@@ -11,7 +11,8 @@ const RicambioFormPage = () => {
     codice: '',
     descrizione: '',
     quantita: '0',
-    prezzo_unitario: '0',
+    prezzo_acquisto: '0',
+    prezzo_vendita: '0',
     ubicazione: '',
     fornitore_id: '',
     scorta_minima: '',
@@ -48,7 +49,8 @@ const RicambioFormPage = () => {
       setFormData({
         ...data,
         quantita: String(data.quantita || 0),
-        prezzo_unitario: String(data.prezzo_unitario || 0),
+        prezzo_acquisto: String(data.prezzo_acquisto || 0),
+        prezzo_vendita: String(data.prezzo_vendita || 0),
         scorta_minima: String(data.scorta_minima || ''),
         fornitore_id: String(data.fornitore_id || '')
       });
@@ -78,7 +80,8 @@ const RicambioFormPage = () => {
       const dataToSend = {
         ...formData,
         quantita: parseFloat(formData.quantita) || 0,
-        prezzo_unitario: parseFloat(formData.prezzo_unitario) || 0,
+        prezzo_acquisto: parseFloat(formData.prezzo_acquisto) || 0,
+        prezzo_vendita: parseFloat(formData.prezzo_vendita) || 0,
         scorta_minima: formData.scorta_minima && formData.scorta_minima !== '' ? parseFloat(formData.scorta_minima) : null,
         fornitore_id: formData.fornitore_id && formData.fornitore_id !== '' ? parseInt(formData.fornitore_id) : null
       };
@@ -166,16 +169,34 @@ const RicambioFormPage = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prezzo Unitario (€) *
+                  Prezzo Acquisto (€) *
                 </label>
                 <input
                   type="number"
-                  name="prezzo_unitario"
-                  value={formData.prezzo_unitario}
+                  name="prezzo_acquisto"
+                  value={formData.prezzo_acquisto}
                   onChange={handleChange}
                   required
                   min="0"
                   step="0.01"
+                  placeholder="0.00"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prezzo Vendita (€) *
+                </label>
+                <input
+                  type="number"
+                  name="prezzo_vendita"
+                  value={formData.prezzo_vendita}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
