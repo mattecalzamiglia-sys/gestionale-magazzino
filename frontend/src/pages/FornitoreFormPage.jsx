@@ -32,7 +32,19 @@ const FornitoreFormPage = () => {
     try {
       setLoading(true);
       const response = await api.get(`/anagrafiche/fornitori/${id}`);
-      setFormData(response.data);
+      const data = response.data;
+      // Converti tutti i null in stringhe vuote per i campi input
+      setFormData({
+        nome: data.nome || '',
+        email: data.email || '',
+        telefono: data.telefono || '',
+        indirizzo: data.indirizzo || '',
+        citta: data.citta || '',
+        cap: data.cap || '',
+        partita_iva: data.partita_iva || '',
+        codice_fiscale: data.codice_fiscale || '',
+        note: data.note || ''
+      });
     } catch (err) {
       setError('Errore nel caricamento del fornitore');
       console.error(err);

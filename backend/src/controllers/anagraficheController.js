@@ -41,13 +41,13 @@ exports.getDipendenteById = async (req, res) => {
 
 exports.createDipendente = async (req, res) => {
   try {
-    const { nome, cognome, codice, costo_orario, tariffa_cliente, ruolo, attivo } = req.body;
+    const { nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note } = req.body;
 
     const result = await db.query(
-      `INSERT INTO dipendenti (nome, cognome, codice, costo_orario, tariffa_cliente, ruolo, attivo)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO dipendenti (nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
-      [nome, cognome, codice, costo_orario, tariffa_cliente, ruolo, attivo !== false]
+      [nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note]
     );
 
     res.status(201).json(result.rows[0]);
@@ -60,15 +60,15 @@ exports.createDipendente = async (req, res) => {
 exports.updateDipendente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, cognome, codice, costo_orario, tariffa_cliente, ruolo, attivo } = req.body;
+    const { nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note } = req.body;
 
     const result = await db.query(
       `UPDATE dipendenti 
-       SET nome = $1, cognome = $2, codice = $3, costo_orario = $4, 
-           tariffa_cliente = $5, ruolo = $6, attivo = $7, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $8
+       SET nome = $1, cognome = $2, email = $3, telefono = $4, qualifica = $5, 
+           costo_orario = $6, data_assunzione = $7, note = $8
+       WHERE id = $9
        RETURNING *`,
-      [nome, cognome, codice, costo_orario, tariffa_cliente, ruolo, attivo, id]
+      [nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note, id]
     );
 
     if (result.rows.length === 0) {
@@ -128,13 +128,13 @@ exports.getClienteById = async (req, res) => {
 
 exports.createCliente = async (req, res) => {
   try {
-    const { nome, partita_iva, codice_fiscale, telefono, email, indirizzo } = req.body;
+    const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
-      `INSERT INTO clienti (nome, partita_iva, codice_fiscale, telefono, email, indirizzo)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO clienti (nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [nome, partita_iva, codice_fiscale, telefono, email, indirizzo]
+      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note]
     );
 
     res.status(201).json(result.rows[0]);
@@ -147,15 +147,15 @@ exports.createCliente = async (req, res) => {
 exports.updateCliente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, partita_iva, codice_fiscale, telefono, email, indirizzo } = req.body;
+    const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
       `UPDATE clienti 
-       SET nome = $1, partita_iva = $2, codice_fiscale = $3, telefono = $4, 
-           email = $5, indirizzo = $6, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $7
+       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5, 
+           cap = $6, partita_iva = $7, codice_fiscale = $8, note = $9
+       WHERE id = $10
        RETURNING *`,
-      [nome, partita_iva, codice_fiscale, telefono, email, indirizzo, id]
+      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note, id]
     );
 
     if (result.rows.length === 0) {
@@ -215,13 +215,13 @@ exports.getFornitoreById = async (req, res) => {
 
 exports.createFornitore = async (req, res) => {
   try {
-    const { nome, partita_iva, telefono, email, indirizzo } = req.body;
+    const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
-      `INSERT INTO fornitori (nome, partita_iva, telefono, email, indirizzo)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO fornitori (nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [nome, partita_iva, telefono, email, indirizzo]
+      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note]
     );
 
     res.status(201).json(result.rows[0]);
@@ -234,15 +234,15 @@ exports.createFornitore = async (req, res) => {
 exports.updateFornitore = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, partita_iva, telefono, email, indirizzo } = req.body;
+    const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
       `UPDATE fornitori 
-       SET nome = $1, partita_iva = $2, telefono = $3, email = $4, 
-           indirizzo = $5, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $6
+       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5, 
+           cap = $6, partita_iva = $7, codice_fiscale = $8, note = $9
+       WHERE id = $10
        RETURNING *`,
-      [nome, partita_iva, telefono, email, indirizzo, id]
+      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note, id]
     );
 
     if (result.rows.length === 0) {
@@ -271,3 +271,5 @@ exports.deleteFornitore = async (req, res) => {
     res.status(500).json({ error: 'Errore nell\'eliminazione del fornitore' });
   }
 };
+
+module.exports = exports;

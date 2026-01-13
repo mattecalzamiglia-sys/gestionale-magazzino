@@ -11,8 +11,8 @@ const CommessaFormPage = () => {
     codice: '',
     descrizione: '',
     cliente_id: '',
-    data_inizio: '',
-    data_fine_prevista: '',
+    data_apertura: '',
+    data_chiusura_prevista: '',
     stato: 'aperta',
     note: ''
   });
@@ -44,11 +44,11 @@ const CommessaFormPage = () => {
       const response = await api.get(`/commesse/${id}`);
       // Formatta le date per l'input type="date"
       const data = response.data;
-      if (data.data_inizio) {
-        data.data_inizio = data.data_inizio.split('T')[0];
+      if (data.data_apertura) {
+        data.data_apertura = data.data_apertura.split('T')[0];
       }
-      if (data.data_fine_prevista) {
-        data.data_fine_prevista = data.data_fine_prevista.split('T')[0];
+      if (data.data_chiusura_prevista) {
+        data.data_chiusura_prevista = data.data_chiusura_prevista.split('T')[0];
       }
       setFormData(data);
     } catch (err) {
@@ -74,9 +74,17 @@ const CommessaFormPage = () => {
 
     try {
       // Converti cliente_id in numero se presente, altrimenti null
+      let cliente_id_value = null;
+      if (formData.cliente_id && formData.cliente_id !== '' && formData.cliente_id !== 'undefined') {
+        const parsed = parseInt(formData.cliente_id);
+        if (!isNaN(parsed)) {
+          cliente_id_value = parsed;
+        }
+      }
+
       const dataToSend = {
         ...formData,
-        cliente_id: formData.cliente_id && formData.cliente_id !== '' ? parseInt(formData.cliente_id) : null
+        cliente_id: cliente_id_value
       };
 
       if (isEdit) {
@@ -173,12 +181,12 @@ const CommessaFormPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data Inizio *
+                  Data Apertura *
                 </label>
                 <input
                   type="date"
-                  name="data_inizio"
-                  value={formData.data_inizio}
+                  name="data_apertura"
+                  value={formData.data_apertura}
                   onChange={handleChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -187,12 +195,12 @@ const CommessaFormPage = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Data Fine Prevista
+                  Data Chiusura Prevista
                 </label>
                 <input
                   type="date"
-                  name="data_fine_prevista"
-                  value={formData.data_fine_prevista}
+                  name="data_chiusura_prevista"
+                  value={formData.data_chiusura_prevista}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
