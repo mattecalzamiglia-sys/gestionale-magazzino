@@ -133,20 +133,20 @@ const CommessePage = () => {
                   <div className="flex justify-between">
                     <span>Cliente:</span>
                     <span className="font-medium text-gray-900">
-                      {commessa.cliente_nome || 'N/D'}
+                      {commessa.cliente_nome || commessa.nome_cliente || 'N/D'}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Data Inizio:</span>
+                    <span>Data Apertura:</span>
                     <span className="font-medium text-gray-900">
-                      {commessa.data_inizio ? new Date(commessa.data_inizio).toLocaleDateString('it-IT') : 'N/D'}
+                      {commessa.data_apertura ? new Date(commessa.data_apertura).toLocaleDateString('it-IT') : 'N/D'}
                     </span>
                   </div>
-                  {commessa.data_fine_prevista && (
+                  {commessa.data_chiusura_prevista && (
                     <div className="flex justify-between">
                       <span>Fine Prevista:</span>
                       <span className="font-medium text-gray-900">
-                        {new Date(commessa.data_fine_prevista).toLocaleDateString('it-IT')}
+                        {new Date(commessa.data_chiusura_prevista).toLocaleDateString('it-IT')}
                       </span>
                     </div>
                   )}

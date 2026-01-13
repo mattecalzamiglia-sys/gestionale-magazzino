@@ -5,23 +5,28 @@ exports.getAllCommesse = async (req, res) => {
   try {
     const { stato, cliente_id } = req.query;
     
-    let query = 'SELECT * FROM vista_riepilogo_commesse WHERE 1=1';
+    let query = `
+      SELECT c.*, cl.nome as cliente_nome
+      FROM commesse c
+      LEFT JOIN clienti cl ON c.cliente_id = cl.id
+      WHERE 1=1
+    `;
     const params = [];
     let paramIndex = 1;
 
     if (stato) {
-      query += ` AND stato = $${paramIndex}`;
+      query += ` AND c.stato = $${paramIndex}`;
       params.push(stato);
       paramIndex++;
     }
 
     if (cliente_id) {
-      query += ` AND cliente_id = $${paramIndex}`;
+      query += ` AND c.cliente_id = $${paramIndex}`;
       params.push(cliente_id);
       paramIndex++;
     }
 
-    query += ' ORDER BY data_apertura DESC';
+    query += ' ORDER BY c.data_apertura DESC';
 
     const result = await db.query(query, params);
     res.json(result.rows);
