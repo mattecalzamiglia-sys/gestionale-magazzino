@@ -70,8 +70,17 @@ const Dashboard = () => {
   }
 
   return (
-    <div>
-      <div className="mb-6">
+    <div className="relative">
+      {/* Logo Watermark */}
+      <div className="absolute top-0 right-0 pointer-events-none z-0">
+        <img
+          src="/logo.png"
+          alt="LOCAFOR Logo"
+          className="w-64 opacity-10"
+        />
+      </div>
+
+      <div className="mb-6 relative z-10">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Panoramica generale del gestionale</p>
       </div>
@@ -83,7 +92,7 @@ const Dashboard = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8 relative z-10">
         {/* Magazzino Card */}
         <div 
           className="bg-white rounded-lg shadow p-6 cursor-pointer hover:shadow-lg transition-shadow"
@@ -187,7 +196,7 @@ const Dashboard = () => {
 
       {/* Welcome Message */}
       {stats.totaleRicambi === 0 && stats.totaleCommesse === 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 relative z-10">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">
             👋 Benvenuto nel Gestionale!
           </h3>
