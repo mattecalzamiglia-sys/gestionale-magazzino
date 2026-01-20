@@ -76,7 +76,7 @@ const Dashboard = () => {
         <img
           src="/logo.png"
           alt="LOCAFOR"
-          className="w-48 opacity-25"
+          className="w-48 opacity-40"
         />
       </div>
 
