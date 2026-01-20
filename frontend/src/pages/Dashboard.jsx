@@ -72,11 +72,11 @@ const Dashboard = () => {
   return (
     <div className="relative">
       {/* Logo Watermark */}
-      <div className="absolute top-0 right-0 pointer-events-none z-0">
+      <div className="absolute top-4 right-8 pointer-events-none z-0">
         <img
           src="/logo.png"
-          alt="LOCAFOR Logo"
-          className="w-64 opacity-10"
+          alt="LOCAFOR"
+          className="w-48 opacity-40"
         />
       </div>
 
