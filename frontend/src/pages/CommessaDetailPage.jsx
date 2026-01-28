@@ -30,7 +30,8 @@ const CommessaDetailPage = () => {
     fase_lavorazione: '',
     tipo_sede: 'sede',
     prezzo_km: '',
-    km_percorsi: ''
+    km_percorsi: '',
+    tariffa_cliente: ''
   });
 
   useEffect(() => {
@@ -99,7 +100,8 @@ const CommessaDetailPage = () => {
         fase_lavorazione: oreForm.fase_lavorazione,
         tipo_sede: oreForm.tipo_sede,
         prezzo_km: oreForm.tipo_sede === 'trasferta' && oreForm.prezzo_km ? parseFloat(oreForm.prezzo_km) : 0,
-        km_percorsi: oreForm.tipo_sede === 'trasferta' && oreForm.km_percorsi ? parseFloat(oreForm.km_percorsi) : 0
+        km_percorsi: oreForm.tipo_sede === 'trasferta' && oreForm.km_percorsi ? parseFloat(oreForm.km_percorsi) : 0,
+        tariffa_cliente: oreForm.tariffa_cliente ? parseFloat(oreForm.tariffa_cliente) : null
       });
       alert('Ore registrate con successo');
       setShowOreModal(false);
@@ -112,7 +114,8 @@ const CommessaDetailPage = () => {
         fase_lavorazione: '',
         tipo_sede: 'sede',
         prezzo_km: '',
-        km_percorsi: ''
+        km_percorsi: '',
+        tariffa_cliente: ''
       });
       fetchData();
     } catch (error) {
@@ -352,6 +355,19 @@ const CommessaDetailPage = () => {
                 </div>
               </div>
               <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tariffa Cliente (€/h)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={oreForm.tariffa_cliente}
+                  onChange={(e) => setOreForm({...oreForm, tariffa_cliente: e.target.value})}
+                  className="input-field"
+                  placeholder={oreForm.dipendente_id ? `Default: €${dipendenti.find(d => d.id === parseInt(oreForm.dipendente_id))?.tariffa_cliente || '0.00'}/h` : 'Seleziona dipendente'}
+                />
+                <p className="text-xs text-gray-500 mt-1">Prezzo orario da fatturare al cliente. Lascia vuoto per usare la tariffa standard del dipendente.</p>
+              </div>
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Fase Lavorazione</label>
                 <input
                   type="text"
@@ -472,6 +488,8 @@ const CommessaDetailPage = () => {
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dipendente</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ore</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Costo/h</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tariffa/h</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Luogo</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Trasferta</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Costo Tot.</th>
@@ -487,6 +505,8 @@ const CommessaDetailPage = () => {
                     <td className="px-3 py-4 whitespace-nowrap text-sm">
                       {o.ore_ordinarie}h {o.ore_straordinarie > 0 && <span className="text-orange-600">+{o.ore_straordinarie}h str.</span>}
                     </td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-red-600">€{parseFloat(o.costo_orario || 0).toFixed(2)}</td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm text-green-600">€{parseFloat(o.tariffa_cliente || 0).toFixed(2)}</td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm">
                       <span className={`px-2 py-1 rounded text-xs ${o.tipo_sede === 'trasferta' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>
                         {o.tipo_sede === 'trasferta' ? 'Trasferta' : 'Sede'}

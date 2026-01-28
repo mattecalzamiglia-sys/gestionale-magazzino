@@ -273,7 +273,8 @@ exports.registraOreLavoro = async (req, res) => {
       fase_lavorazione,
       tipo_sede,
       prezzo_km,
-      km_percorsi
+      km_percorsi,
+      tariffa_cliente
     } = req.body;
 
     // Recupera costo orario e tariffa del dipendente
@@ -286,7 +287,12 @@ exports.registraOreLavoro = async (req, res) => {
       return res.status(404).json({ error: 'Dipendente non trovato' });
     }
 
-    const { costo_orario, tariffa_cliente } = dipendenteResult.rows[0];
+    const { costo_orario, tariffa_cliente: tariffa_dipendente } = dipendenteResult.rows[0];
+
+    // Usa la tariffa passata dal form, altrimenti usa quella di default del dipendente
+    const tariffaClienteFinale = tariffa_cliente !== undefined && tariffa_cliente !== null && tariffa_cliente !== ''
+      ? tariffa_cliente
+      : tariffa_dipendente;
 
     const result = await db.query(
       `INSERT INTO ore_lavoro_commessa
@@ -296,7 +302,7 @@ exports.registraOreLavoro = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [commessa_id, dipendente_id, data, ore_ordinarie || 0, ore_straordinarie || 0,
-       costo_orario, tariffa_cliente, descrizione_attivita, fase_lavorazione,
+       costo_orario, tariffaClienteFinale, descrizione_attivita, fase_lavorazione,
        tipo_sede || 'sede', prezzo_km || 0, km_percorsi || 0]
     );
 
