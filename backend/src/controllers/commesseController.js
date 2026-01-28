@@ -91,13 +91,17 @@ exports.getCommessaById = async (req, res) => {
       [id]
     );
 
-    // Calcola totali
-    const totaleRicambi = ricambiResult.rows.reduce((sum, r) => sum + parseFloat(r.costo_totale || 0), 0);
-    const totaleOre = oreResult.rows.reduce((sum, o) => sum + parseFloat(o.costo_totale || 0), 0);
+    // Calcola totali costi
+    const costoRicambi = ricambiResult.rows.reduce((sum, r) => sum + parseFloat(r.costo_totale || 0), 0);
+    const ricavoRicambi = ricambiResult.rows.reduce((sum, r) => sum + parseFloat(r.ricavo_totale || 0), 0);
+    const costoOre = oreResult.rows.reduce((sum, o) => sum + parseFloat(o.costo_totale || 0), 0);
+    const ricavoOre = oreResult.rows.reduce((sum, o) => sum + parseFloat(o.ricavo_totale || 0), 0);
     const totaleCostiAggiuntivi = costiResult.rows.reduce((sum, c) => sum + parseFloat(c.importo || 0), 0);
-    const costoTotale = totaleRicambi + totaleOre + totaleCostiAggiuntivi;
-    const margine = (commessa.importo_preventivo || 0) - costoTotale;
-    const marginePercentuale = commessa.importo_preventivo > 0 ? (margine / commessa.importo_preventivo * 100) : 0;
+
+    const costoTotale = costoRicambi + costoOre + totaleCostiAggiuntivi;
+    const ricavoTotale = ricavoRicambi + ricavoOre;
+    const margine = ricavoTotale - costoTotale;
+    const marginePercentuale = ricavoTotale > 0 ? (margine / ricavoTotale * 100) : 0;
 
     res.json({
       ...commessa,
@@ -106,10 +110,13 @@ exports.getCommessaById = async (req, res) => {
       costi_aggiuntivi: costiResult.rows,
       campi_custom: campiCustomResult.rows,
       riepilogo: {
-        totale_ricambi: totaleRicambi,
-        totale_ore: totaleOre,
+        costo_ricambi: costoRicambi,
+        ricavo_ricambi: ricavoRicambi,
+        costo_ore: costoOre,
+        ricavo_ore: ricavoOre,
         totale_costi_aggiuntivi: totaleCostiAggiuntivi,
         costo_totale: costoTotale,
+        ricavo_totale: ricavoTotale,
         margine: margine,
         margine_percentuale: marginePercentuale.toFixed(2)
       }
@@ -213,20 +220,24 @@ exports.deleteCommessa = async (req, res) => {
 // POST scarico ricambio su commessa
 exports.scaricoRicambio = async (req, res) => {
   try {
-    const { commessa_id, ricambio_id, quantita, operatore, note } = req.body;
+    const { commessa_id, ricambio_id, quantita, prezzo_vendita, operatore, note } = req.body;
 
     // Verifica disponibilità
-    const ricambioResult = await db.query('SELECT quantita, prezzo_acquisto FROM ricambi WHERE id = $1', [ricambio_id]);
-    
+    const ricambioResult = await db.query('SELECT quantita, prezzo_acquisto, prezzo_vendita FROM ricambi WHERE id = $1', [ricambio_id]);
+
     if (ricambioResult.rows.length === 0) {
       return res.status(404).json({ error: 'Ricambio non trovato' });
     }
 
     const quantitaDisponibile = ricambioResult.rows[0].quantita;
     const prezzoUnitario = ricambioResult.rows[0].prezzo_acquisto;
+    // Usa il prezzo vendita passato dal form, altrimenti usa quello di default del ricambio
+    const prezzoVenditaFinale = prezzo_vendita !== undefined && prezzo_vendita !== null && prezzo_vendita !== ''
+      ? prezzo_vendita
+      : ricambioResult.rows[0].prezzo_vendita;
 
     if (quantitaDisponibile < quantita) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Quantità non disponibile',
         disponibile: quantitaDisponibile,
         richiesta: quantita
@@ -235,11 +246,11 @@ exports.scaricoRicambio = async (req, res) => {
 
     // Inserisci movimento (il trigger aggiornerà automaticamente il magazzino)
     const result = await db.query(
-      `INSERT INTO movimenti_ricambi_commessa 
-       (commessa_id, ricambio_id, quantita, prezzo_unitario, operatore, note)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO movimenti_ricambi_commessa
+       (commessa_id, ricambio_id, quantita, prezzo_unitario, prezzo_vendita, operatore, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING *`,
-      [commessa_id, ricambio_id, quantita, prezzoUnitario, operatore, note]
+      [commessa_id, ricambio_id, quantita, prezzoUnitario, prezzoVenditaFinale, operatore, note]
     );
 
     res.status(201).json(result.rows[0]);
@@ -259,7 +270,10 @@ exports.registraOreLavoro = async (req, res) => {
       ore_ordinarie,
       ore_straordinarie,
       descrizione_attivita,
-      fase_lavorazione
+      fase_lavorazione,
+      tipo_sede,
+      prezzo_km,
+      km_percorsi
     } = req.body;
 
     // Recupera costo orario e tariffa del dipendente
@@ -275,13 +289,15 @@ exports.registraOreLavoro = async (req, res) => {
     const { costo_orario, tariffa_cliente } = dipendenteResult.rows[0];
 
     const result = await db.query(
-      `INSERT INTO ore_lavoro_commessa 
-       (commessa_id, dipendente_id, data, ore_ordinarie, ore_straordinarie, 
-        costo_orario, tariffa_cliente, descrizione_attivita, fase_lavorazione)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO ore_lavoro_commessa
+       (commessa_id, dipendente_id, data, ore_ordinarie, ore_straordinarie,
+        costo_orario, tariffa_cliente, descrizione_attivita, fase_lavorazione,
+        tipo_sede, prezzo_km, km_percorsi)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [commessa_id, dipendente_id, data, ore_ordinarie || 0, ore_straordinarie || 0, 
-       costo_orario, tariffa_cliente, descrizione_attivita, fase_lavorazione]
+      [commessa_id, dipendente_id, data, ore_ordinarie || 0, ore_straordinarie || 0,
+       costo_orario, tariffa_cliente, descrizione_attivita, fase_lavorazione,
+       tipo_sede || 'sede', prezzo_km || 0, km_percorsi || 0]
     );
 
     res.status(201).json(result.rows[0]);
