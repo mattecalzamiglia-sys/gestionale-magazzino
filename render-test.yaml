@@ -1,0 +1,20 @@
+services:
+  # Backend Web Service - TEST Environment
+  - type: web
+    name: gestionale-backend-test
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: feature/preventivo-trasferta
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: NODE_ENV
+        value: test
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGIN
+        value: "*"
+    healthCheckPath: /api/health
