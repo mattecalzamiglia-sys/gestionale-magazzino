@@ -1,6 +1,11 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// IMPORTANTE: Forza IPv4 PRIMA di creare il pool
+// Necessario per Render che non supporta IPv6 verso Supabase
+const dns = require('dns');
+dns.setDefaultResultOrder('ipv4first');
+
 // Configurazione per Supabase PostgreSQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -10,13 +15,7 @@ const pool = new Pool({
   max: 20,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
-  // Forza IPv4 per evitare problemi di connessione su Render
-  options: '-c search_path=public'
 });
-
-// Workaround per forzare IPv4 su Render
-const dns = require('dns');
-dns.setDefaultResultOrder('ipv4first');
 
 // Test connessione
 pool.on('connect', () => {
