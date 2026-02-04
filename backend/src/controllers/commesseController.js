@@ -277,9 +277,9 @@ exports.registraOreLavoro = async (req, res) => {
       tariffa_cliente
     } = req.body;
 
-    // Recupera costo orario e tariffa del dipendente
+    // Recupera solo il costo orario del dipendente (la tariffa_cliente viene passata dal form per ogni commessa)
     const dipendenteResult = await db.query(
-      'SELECT costo_orario, tariffa_cliente FROM dipendenti WHERE id = $1',
+      'SELECT costo_orario FROM dipendenti WHERE id = $1',
       [dipendente_id]
     );
 
@@ -287,12 +287,12 @@ exports.registraOreLavoro = async (req, res) => {
       return res.status(404).json({ error: 'Dipendente non trovato' });
     }
 
-    const { costo_orario, tariffa_cliente: tariffa_dipendente } = dipendenteResult.rows[0];
+    const { costo_orario } = dipendenteResult.rows[0];
 
-    // Usa la tariffa passata dal form, altrimenti usa quella di default del dipendente
-    const tariffaClienteFinale = tariffa_cliente !== undefined && tariffa_cliente !== null && tariffa_cliente !== ''
+    // La tariffa cliente deve essere passata dal form (è specifica per commessa)
+    const tariffaClienteFinale = (tariffa_cliente !== undefined && tariffa_cliente !== null && tariffa_cliente !== '')
       ? tariffa_cliente
-      : tariffa_dipendente;
+      : null;
 
     const result = await db.query(
       `INSERT INTO ore_lavoro_commessa

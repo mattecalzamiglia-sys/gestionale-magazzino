@@ -41,18 +41,17 @@ exports.getDipendenteById = async (req, res) => {
 
 exports.createDipendente = async (req, res) => {
   try {
-    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, tariffa_cliente, ruolo, attivo, data_assunzione, note } = req.body;
+    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note } = req.body;
 
-    // Converte stringhe vuote in null per campi numerici e date
-    const cleanCostoOrario = costo_orario === '' ? null : costo_orario;
-    const cleanTariffaCliente = tariffa_cliente === '' ? null : tariffa_cliente;
-    const cleanDataAssunzione = data_assunzione === '' ? null : data_assunzione;
+    // Converte stringhe vuote: costo_orario in 0 (è NOT NULL), altri in null
+    const cleanCostoOrario = (costo_orario === '' || costo_orario === null || costo_orario === undefined) ? 0 : costo_orario;
+    const cleanDataAssunzione = (data_assunzione === '' || data_assunzione === undefined) ? null : data_assunzione;
 
     const result = await db.query(
-      `INSERT INTO dipendenti (nome, cognome, codice, email, telefono, qualifica, costo_orario, tariffa_cliente, ruolo, attivo, data_assunzione, note)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      `INSERT INTO dipendenti (nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, cleanTariffaCliente, ruolo || null, attivo !== false, cleanDataAssunzione, note || null]
+      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, ruolo || null, attivo !== false, cleanDataAssunzione, note || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -65,20 +64,19 @@ exports.createDipendente = async (req, res) => {
 exports.updateDipendente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, tariffa_cliente, ruolo, attivo, data_assunzione, note } = req.body;
+    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note } = req.body;
 
-    // Converte stringhe vuote in null per campi numerici e date
-    const cleanCostoOrario = costo_orario === '' ? null : costo_orario;
-    const cleanTariffaCliente = tariffa_cliente === '' ? null : tariffa_cliente;
-    const cleanDataAssunzione = data_assunzione === '' ? null : data_assunzione;
+    // Converte stringhe vuote: costo_orario in 0 (è NOT NULL), altri in null
+    const cleanCostoOrario = (costo_orario === '' || costo_orario === null || costo_orario === undefined) ? 0 : costo_orario;
+    const cleanDataAssunzione = (data_assunzione === '' || data_assunzione === undefined) ? null : data_assunzione;
 
     const result = await db.query(
       `UPDATE dipendenti
        SET nome = $1, cognome = $2, codice = $3, email = $4, telefono = $5, qualifica = $6,
-           costo_orario = $7, tariffa_cliente = $8, ruolo = $9, attivo = $10, data_assunzione = $11, note = $12
-       WHERE id = $13
+           costo_orario = $7, ruolo = $8, attivo = $9, data_assunzione = $10, note = $11
+       WHERE id = $12
        RETURNING *`,
-      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, cleanTariffaCliente, ruolo || null, attivo, cleanDataAssunzione, note || null, id]
+      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, ruolo || null, attivo, cleanDataAssunzione, note || null, id]
     );
 
     if (result.rows.length === 0) {
