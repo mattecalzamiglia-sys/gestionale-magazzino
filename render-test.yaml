@@ -1,0 +1,37 @@
+services:
+  # Backend Web Service - TEST Environment
+  - type: web
+    name: gestionale-backend-test
+    runtime: node
+    region: frankfurt
+    plan: free
+    branch: feature/preventivo-trasferta
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_vkcadH1M6OUh@ep-still-sky-agrgc6eg-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require
+      - key: NODE_ENV
+        value: test
+      - key: PORT
+        value: 3001
+      - key: CORS_ORIGIN
+        value: https://gestionale-frontend-test.onrender.com
+    healthCheckPath: /api/health
+
+  # Frontend Static Site - TEST Environment
+  - type: web
+    name: gestionale-frontend-test
+    runtime: static
+    region: frankfurt
+    plan: free
+    branch: feature/preventivo-trasferta
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://gestionale-backend-test.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
