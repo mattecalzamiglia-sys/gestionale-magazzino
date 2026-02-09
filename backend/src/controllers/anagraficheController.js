@@ -41,13 +41,17 @@ exports.getDipendenteById = async (req, res) => {
 
 exports.createDipendente = async (req, res) => {
   try {
-    const { nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note } = req.body;
+    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note } = req.body;
+
+    // Converte stringhe vuote: costo_orario in 0 (è NOT NULL), altri in null
+    const cleanCostoOrario = (costo_orario === '' || costo_orario === null || costo_orario === undefined) ? 0 : costo_orario;
+    const cleanDataAssunzione = (data_assunzione === '' || data_assunzione === undefined) ? null : data_assunzione;
 
     const result = await db.query(
-      `INSERT INTO dipendenti (nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `INSERT INTO dipendenti (nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
        RETURNING *`,
-      [nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note]
+      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, ruolo || null, attivo !== false, cleanDataAssunzione, note || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -60,15 +64,19 @@ exports.createDipendente = async (req, res) => {
 exports.updateDipendente = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note } = req.body;
+    const { nome, cognome, codice, email, telefono, qualifica, costo_orario, ruolo, attivo, data_assunzione, note } = req.body;
+
+    // Converte stringhe vuote: costo_orario in 0 (è NOT NULL), altri in null
+    const cleanCostoOrario = (costo_orario === '' || costo_orario === null || costo_orario === undefined) ? 0 : costo_orario;
+    const cleanDataAssunzione = (data_assunzione === '' || data_assunzione === undefined) ? null : data_assunzione;
 
     const result = await db.query(
-      `UPDATE dipendenti 
-       SET nome = $1, cognome = $2, email = $3, telefono = $4, qualifica = $5, 
-           costo_orario = $6, data_assunzione = $7, note = $8
-       WHERE id = $9
+      `UPDATE dipendenti
+       SET nome = $1, cognome = $2, codice = $3, email = $4, telefono = $5, qualifica = $6,
+           costo_orario = $7, ruolo = $8, attivo = $9, data_assunzione = $10, note = $11
+       WHERE id = $12
        RETURNING *`,
-      [nome, cognome, email, telefono, qualifica, costo_orario, data_assunzione, note, id]
+      [nome, cognome, codice || null, email || null, telefono || null, qualifica || null, cleanCostoOrario, ruolo || null, attivo, cleanDataAssunzione, note || null, id]
     );
 
     if (result.rows.length === 0) {
@@ -134,7 +142,7 @@ exports.createCliente = async (req, res) => {
       `INSERT INTO clienti (nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note]
+      [nome, email || null, telefono || null, indirizzo || null, citta || null, cap || null, partita_iva || null, codice_fiscale || null, note || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -150,12 +158,12 @@ exports.updateCliente = async (req, res) => {
     const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
-      `UPDATE clienti 
-       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5, 
+      `UPDATE clienti
+       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5,
            cap = $6, partita_iva = $7, codice_fiscale = $8, note = $9
        WHERE id = $10
        RETURNING *`,
-      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note, id]
+      [nome, email || null, telefono || null, indirizzo || null, citta || null, cap || null, partita_iva || null, codice_fiscale || null, note || null, id]
     );
 
     if (result.rows.length === 0) {
@@ -221,7 +229,7 @@ exports.createFornitore = async (req, res) => {
       `INSERT INTO fornitori (nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note]
+      [nome, email || null, telefono || null, indirizzo || null, citta || null, cap || null, partita_iva || null, codice_fiscale || null, note || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -237,12 +245,12 @@ exports.updateFornitore = async (req, res) => {
     const { nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note } = req.body;
 
     const result = await db.query(
-      `UPDATE fornitori 
-       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5, 
+      `UPDATE fornitori
+       SET nome = $1, email = $2, telefono = $3, indirizzo = $4, citta = $5,
            cap = $6, partita_iva = $7, codice_fiscale = $8, note = $9
        WHERE id = $10
        RETURNING *`,
-      [nome, email, telefono, indirizzo, citta, cap, partita_iva, codice_fiscale, note, id]
+      [nome, email || null, telefono || null, indirizzo || null, citta || null, cap || null, partita_iva || null, codice_fiscale || null, note || null, id]
     );
 
     if (result.rows.length === 0) {

@@ -79,7 +79,9 @@ CREATE TABLE movimenti_ricambi_commessa (
     ricambio_id INTEGER REFERENCES ricambi(id),
     quantita INTEGER NOT NULL,
     prezzo_unitario DECIMAL(10, 2) NOT NULL,
+    prezzo_vendita DECIMAL(10, 2),
     costo_totale DECIMAL(10, 2) GENERATED ALWAYS AS (quantita * prezzo_unitario) STORED,
+    ricavo_totale DECIMAL(10, 2) GENERATED ALWAYS AS (quantita * COALESCE(prezzo_vendita, 0)) STORED,
     data_movimento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     operatore VARCHAR(255),
     note TEXT,
@@ -96,8 +98,11 @@ CREATE TABLE ore_lavoro_commessa (
     ore_straordinarie DECIMAL(5, 2) DEFAULT 0,
     costo_orario DECIMAL(10, 2) NOT NULL,
     tariffa_cliente DECIMAL(10, 2),
-    costo_totale DECIMAL(10, 2) GENERATED ALWAYS AS ((ore_ordinarie + ore_straordinarie) * costo_orario) STORED,
-    ricavo_totale DECIMAL(10, 2) GENERATED ALWAYS AS ((ore_ordinarie + ore_straordinarie) * tariffa_cliente) STORED,
+    tipo_sede VARCHAR(20) DEFAULT 'sede' CHECK (tipo_sede IN ('sede', 'trasferta')),
+    prezzo_km DECIMAL(10, 2) DEFAULT 0,
+    km_percorsi DECIMAL(10, 2) DEFAULT 0,
+    costo_totale DECIMAL(10, 2) GENERATED ALWAYS AS ((ore_ordinarie + ore_straordinarie) * costo_orario + (COALESCE(km_percorsi, 0) * COALESCE(prezzo_km, 0))) STORED,
+    ricavo_totale DECIMAL(10, 2) GENERATED ALWAYS AS ((ore_ordinarie + ore_straordinarie) * COALESCE(tariffa_cliente, 0) + (COALESCE(km_percorsi, 0) * COALESCE(prezzo_km, 0))) STORED,
     descrizione_attivita TEXT,
     fase_lavorazione VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -197,9 +202,9 @@ CREATE TRIGGER trigger_scarico_magazzino
 AFTER INSERT ON movimenti_ricambi_commessa 
 FOR EACH ROW EXECUTE FUNCTION aggiorna_quantita_magazzino();
 
--- View per riepilogo costi commessa
+-- View per riepilogo costi e ricavi commessa
 CREATE OR REPLACE VIEW vista_riepilogo_commesse AS
-SELECT 
+SELECT
     c.id,
     c.codice,
     c.descrizione,
@@ -207,24 +212,23 @@ SELECT
     cl.nome as cliente,
     c.data_apertura,
     c.importo_preventivo,
-    COALESCE(SUM(mrc.costo_totale), 0) as costo_ricambi,
-    COALESCE(SUM(olc.costo_totale), 0) as costo_manodopera,
-    COALESCE(SUM(cac.importo), 0) as costi_aggiuntivi,
-    COALESCE(SUM(mrc.costo_totale), 0) + 
-    COALESCE(SUM(olc.costo_totale), 0) + 
-    COALESCE(SUM(cac.importo), 0) as costo_totale,
-    c.importo_preventivo - (
-        COALESCE(SUM(mrc.costo_totale), 0) + 
-        COALESCE(SUM(olc.costo_totale), 0) + 
-        COALESCE(SUM(cac.importo), 0)
-    ) as margine,
-    CASE 
-        WHEN c.importo_preventivo > 0 THEN
-            ((c.importo_preventivo - (
-                COALESCE(SUM(mrc.costo_totale), 0) + 
-                COALESCE(SUM(olc.costo_totale), 0) + 
-                COALESCE(SUM(cac.importo), 0)
-            )) / c.importo_preventivo * 100)
+    COALESCE(SUM(DISTINCT mrc.costo_totale), 0) as costo_ricambi,
+    COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) as ricavo_ricambi,
+    COALESCE(SUM(DISTINCT olc.costo_totale), 0) as costo_manodopera,
+    COALESCE(SUM(DISTINCT olc.ricavo_totale), 0) as ricavo_manodopera,
+    COALESCE(SUM(DISTINCT cac.importo), 0) as costi_aggiuntivi,
+    COALESCE(SUM(DISTINCT mrc.costo_totale), 0) +
+    COALESCE(SUM(DISTINCT olc.costo_totale), 0) +
+    COALESCE(SUM(DISTINCT cac.importo), 0) as costo_totale,
+    COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) +
+    COALESCE(SUM(DISTINCT olc.ricavo_totale), 0) as ricavo_totale,
+    (COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) + COALESCE(SUM(DISTINCT olc.ricavo_totale), 0)) -
+    (COALESCE(SUM(DISTINCT mrc.costo_totale), 0) + COALESCE(SUM(DISTINCT olc.costo_totale), 0) + COALESCE(SUM(DISTINCT cac.importo), 0)) as margine,
+    CASE
+        WHEN (COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) + COALESCE(SUM(DISTINCT olc.ricavo_totale), 0)) > 0 THEN
+            (((COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) + COALESCE(SUM(DISTINCT olc.ricavo_totale), 0)) -
+              (COALESCE(SUM(DISTINCT mrc.costo_totale), 0) + COALESCE(SUM(DISTINCT olc.costo_totale), 0) + COALESCE(SUM(DISTINCT cac.importo), 0))) /
+             (COALESCE(SUM(DISTINCT mrc.ricavo_totale), 0) + COALESCE(SUM(DISTINCT olc.ricavo_totale), 0)) * 100)
         ELSE 0
     END as margine_percentuale
 FROM commesse c
