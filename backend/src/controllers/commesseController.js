@@ -142,12 +142,17 @@ exports.createCommessa = async (req, res) => {
       note
     } = req.body;
 
+    // Converte stringhe vuote in null per campi opzionali
+    const cleanDataChiusuraPrevista = (data_chiusura_prevista === '' || data_chiusura_prevista === undefined) ? null : data_chiusura_prevista;
+    const cleanClienteId = (cliente_id === '' || cliente_id === undefined) ? null : cliente_id;
+    const cleanImportoPreventivo = (importo_preventivo === '' || importo_preventivo === undefined) ? null : importo_preventivo;
+
     const result = await db.query(
-      `INSERT INTO commesse 
+      `INSERT INTO commesse
        (codice, cliente_id, descrizione, data_apertura, data_chiusura_prevista, stato, priorita, importo_preventivo, note)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
-      [codice, cliente_id, descrizione, data_apertura, data_chiusura_prevista, stato || 'aperta', priorita || 'media', importo_preventivo, note]
+      [codice, cleanClienteId, descrizione, data_apertura, cleanDataChiusuraPrevista, stato || 'aperta', priorita || 'media', cleanImportoPreventivo, note || null]
     );
 
     res.status(201).json(result.rows[0]);
@@ -178,14 +183,20 @@ exports.updateCommessa = async (req, res) => {
       note
     } = req.body;
 
+    // Converte stringhe vuote in null per campi opzionali
+    const cleanDataChiusuraPrevista = (data_chiusura_prevista === '' || data_chiusura_prevista === undefined) ? null : data_chiusura_prevista;
+    const cleanDataChiusuraEffettiva = (data_chiusura_effettiva === '' || data_chiusura_effettiva === undefined) ? null : data_chiusura_effettiva;
+    const cleanClienteId = (cliente_id === '' || cliente_id === undefined) ? null : cliente_id;
+    const cleanImportoPreventivo = (importo_preventivo === '' || importo_preventivo === undefined) ? null : importo_preventivo;
+
     const result = await db.query(
-      `UPDATE commesse 
+      `UPDATE commesse
        SET codice = $1, cliente_id = $2, descrizione = $3, data_apertura = $4,
            data_chiusura_prevista = $5, data_chiusura_effettiva = $6, stato = $7,
            priorita = $8, importo_preventivo = $9, note = $10, updated_at = CURRENT_TIMESTAMP
        WHERE id = $11
        RETURNING *`,
-      [codice, cliente_id, descrizione, data_apertura, data_chiusura_prevista, data_chiusura_effettiva, stato, priorita, importo_preventivo, note, id]
+      [codice, cleanClienteId, descrizione, data_apertura, cleanDataChiusuraPrevista, cleanDataChiusuraEffettiva, stato, priorita, cleanImportoPreventivo, note || null, id]
     );
 
     if (result.rows.length === 0) {
