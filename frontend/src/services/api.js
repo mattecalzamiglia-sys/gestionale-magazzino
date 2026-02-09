@@ -31,6 +31,12 @@ export const commesseAPI = {
   scaricoRicambio: (data) => api.post('/commesse/scarico-ricambio', data),
   registraOre: (data) => api.post('/commesse/registra-ore', data),
   aggiungiCosto: (data) => api.post('/commesse/costo-aggiuntivo', data),
+  // Modifica/Elimina movimenti ricambi
+  updateMovimentoRicambio: (id, data) => api.put(`/commesse/movimento-ricambio/${id}`, data),
+  deleteMovimentoRicambio: (id) => api.delete(`/commesse/movimento-ricambio/${id}`),
+  // Modifica/Elimina ore lavoro
+  updateOreLavoro: (id, data) => api.put(`/commesse/ore-lavoro/${id}`, data),
+  deleteOreLavoro: (id) => api.delete(`/commesse/ore-lavoro/${id}`),
 };
 
 // Dipendenti

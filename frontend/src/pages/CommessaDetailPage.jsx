@@ -10,6 +10,10 @@ const CommessaDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [showScaricoModal, setShowScaricoModal] = useState(false);
   const [showOreModal, setShowOreModal] = useState(false);
+  const [showEditRicambioModal, setShowEditRicambioModal] = useState(false);
+  const [showEditOreModal, setShowEditOreModal] = useState(false);
+  const [editingRicambio, setEditingRicambio] = useState(null);
+  const [editingOre, setEditingOre] = useState(null);
 
   // Form scarico ricambi
   const [scaricoForm, setScaricoForm] = useState({
@@ -120,6 +124,98 @@ const CommessaDetailPage = () => {
       fetchData();
     } catch (error) {
       alert('Errore nella registrazione delle ore');
+    }
+  };
+
+  // Funzioni per modifica/elimina ricambi
+  const handleEditRicambio = (ricambio) => {
+    setEditingRicambio({
+      id: ricambio.id,
+      quantita: ricambio.quantita,
+      prezzo_vendita: ricambio.prezzo_vendita || '',
+      operatore: ricambio.operatore || '',
+      note: ricambio.note || ''
+    });
+    setShowEditRicambioModal(true);
+  };
+
+  const handleUpdateRicambio = async (e) => {
+    e.preventDefault();
+    try {
+      await commesseAPI.updateMovimentoRicambio(editingRicambio.id, {
+        quantita: editingRicambio.quantita,
+        prezzo_vendita: editingRicambio.prezzo_vendita ? parseFloat(editingRicambio.prezzo_vendita) : null,
+        operatore: editingRicambio.operatore,
+        note: editingRicambio.note
+      });
+      alert('Movimento aggiornato con successo');
+      setShowEditRicambioModal(false);
+      setEditingRicambio(null);
+      fetchData();
+    } catch (error) {
+      alert('Errore nell\'aggiornamento del movimento');
+    }
+  };
+
+  const handleDeleteRicambio = async (ricambioId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questo movimento? La quantità verrà ripristinata nel magazzino.')) return;
+    try {
+      await commesseAPI.deleteMovimentoRicambio(ricambioId);
+      alert('Movimento eliminato e quantità ripristinata');
+      fetchData();
+    } catch (error) {
+      alert('Errore nell\'eliminazione del movimento');
+    }
+  };
+
+  // Funzioni per modifica/elimina ore
+  const handleEditOre = (ore) => {
+    setEditingOre({
+      id: ore.id,
+      data: ore.data.split('T')[0],
+      ore_ordinarie: ore.ore_ordinarie || 0,
+      ore_straordinarie: ore.ore_straordinarie || 0,
+      tariffa_cliente: ore.tariffa_cliente || '',
+      descrizione_attivita: ore.descrizione_attivita || '',
+      fase_lavorazione: ore.fase_lavorazione || '',
+      tipo_sede: ore.tipo_sede || 'sede',
+      prezzo_km: ore.prezzo_km || '',
+      km_percorsi: ore.km_percorsi || ''
+    });
+    setShowEditOreModal(true);
+  };
+
+  const handleUpdateOre = async (e) => {
+    e.preventDefault();
+    try {
+      await commesseAPI.updateOreLavoro(editingOre.id, {
+        data: editingOre.data,
+        ore_ordinarie: editingOre.ore_ordinarie,
+        ore_straordinarie: editingOre.ore_straordinarie,
+        tariffa_cliente: editingOre.tariffa_cliente ? parseFloat(editingOre.tariffa_cliente) : null,
+        descrizione_attivita: editingOre.descrizione_attivita,
+        fase_lavorazione: editingOre.fase_lavorazione,
+        tipo_sede: editingOre.tipo_sede,
+        prezzo_km: editingOre.tipo_sede === 'trasferta' && editingOre.prezzo_km ? parseFloat(editingOre.prezzo_km) : 0,
+        km_percorsi: editingOre.tipo_sede === 'trasferta' && editingOre.km_percorsi ? parseFloat(editingOre.km_percorsi) : 0
+      });
+      alert('Ore aggiornate con successo');
+      setShowEditOreModal(false);
+      setEditingOre(null);
+      fetchData();
+    } catch (error) {
+      alert('Errore nell\'aggiornamento delle ore');
+    }
+  };
+
+  const handleDeleteOre = async (oreId) => {
+    if (!window.confirm('Sei sicuro di voler eliminare questa registrazione ore?')) return;
+    try {
+      await commesseAPI.deleteOreLavoro(oreId);
+      alert('Registrazione ore eliminata');
+      fetchData();
+    } catch (error) {
+      alert('Errore nell\'eliminazione delle ore');
     }
   };
 
@@ -456,6 +552,7 @@ const CommessaDetailPage = () => {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ricavo Tot.</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Data</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operatore</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Azioni</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -469,6 +566,10 @@ const CommessaDetailPage = () => {
                     <td className="px-4 py-4 whitespace-nowrap text-sm font-semibold text-green-600">€{parseFloat(r.ricavo_totale || 0).toFixed(2)}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm">{new Date(r.data_movimento).toLocaleDateString('it-IT')}</td>
                     <td className="px-4 py-4 whitespace-nowrap text-sm">{r.operatore || '-'}</td>
+                    <td className="px-4 py-4 whitespace-nowrap text-sm">
+                      <button onClick={() => handleEditRicambio(r)} className="text-blue-600 hover:text-blue-800 mr-2" title="Modifica">✏️</button>
+                      <button onClick={() => handleDeleteRicambio(r.id)} className="text-red-600 hover:text-red-800" title="Elimina">🗑️</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -495,6 +596,7 @@ const CommessaDetailPage = () => {
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Costo Tot.</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ricavo Tot.</th>
                   <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fase</th>
+                  <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Azioni</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -520,10 +622,190 @@ const CommessaDetailPage = () => {
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-semibold text-red-600">€{parseFloat(o.costo_totale || 0).toFixed(2)}</td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm font-semibold text-green-600">€{parseFloat(o.ricavo_totale || 0).toFixed(2)}</td>
                     <td className="px-3 py-4 whitespace-nowrap text-sm">{o.fase_lavorazione || '-'}</td>
+                    <td className="px-3 py-4 whitespace-nowrap text-sm">
+                      <button onClick={() => handleEditOre(o)} className="text-blue-600 hover:text-blue-800 mr-2" title="Modifica">✏️</button>
+                      <button onClick={() => handleDeleteOre(o.id)} className="text-red-600 hover:text-red-800" title="Elimina">🗑️</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Ricambio */}
+      {showEditRicambioModal && editingRicambio && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Modifica Movimento Ricambio</h3>
+              <button onClick={() => setShowEditRicambioModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form onSubmit={handleUpdateRicambio}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Quantità *</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editingRicambio.quantita}
+                  onChange={(e) => setEditingRicambio({...editingRicambio, quantita: parseInt(e.target.value)})}
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo Vendita (€)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editingRicambio.prezzo_vendita}
+                  onChange={(e) => setEditingRicambio({...editingRicambio, prezzo_vendita: e.target.value})}
+                  className="input-field"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Operatore</label>
+                <input
+                  type="text"
+                  value={editingRicambio.operatore}
+                  onChange={(e) => setEditingRicambio({...editingRicambio, operatore: e.target.value})}
+                  className="input-field"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                <textarea
+                  value={editingRicambio.note}
+                  onChange={(e) => setEditingRicambio({...editingRicambio, note: e.target.value})}
+                  className="input-field"
+                  rows="2"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowEditRicambioModal(false)} className="btn-secondary">Annulla</button>
+                <button type="submit" className="btn-primary">Salva</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Modifica Ore */}
+      {showEditOreModal && editingOre && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Modifica Ore Lavoro</h3>
+              <button onClick={() => setShowEditOreModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form onSubmit={handleUpdateOre}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data *</label>
+                <input
+                  type="date"
+                  value={editingOre.data}
+                  onChange={(e) => setEditingOre({...editingOre, data: e.target.value})}
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ore Ordinarie</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={editingOre.ore_ordinarie}
+                    onChange={(e) => setEditingOre({...editingOre, ore_ordinarie: parseFloat(e.target.value) || 0})}
+                    className="input-field"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Ore Straordinarie</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={editingOre.ore_straordinarie}
+                    onChange={(e) => setEditingOre({...editingOre, ore_straordinarie: parseFloat(e.target.value) || 0})}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tariffa Cliente (€/h)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editingOre.tariffa_cliente}
+                  onChange={(e) => setEditingOre({...editingOre, tariffa_cliente: e.target.value})}
+                  className="input-field"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fase Lavorazione</label>
+                <input
+                  type="text"
+                  value={editingOre.fase_lavorazione}
+                  onChange={(e) => setEditingOre({...editingOre, fase_lavorazione: e.target.value})}
+                  className="input-field"
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Luogo Lavoro</label>
+                <select
+                  value={editingOre.tipo_sede}
+                  onChange={(e) => setEditingOre({...editingOre, tipo_sede: e.target.value})}
+                  className="input-field"
+                >
+                  <option value="sede">In Sede</option>
+                  <option value="trasferta">In Trasferta</option>
+                </select>
+              </div>
+              {editingOre.tipo_sede === 'trasferta' && (
+                <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-blue-50 rounded-md">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Prezzo/Km (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingOre.prezzo_km}
+                      onChange={(e) => setEditingOre({...editingOre, prezzo_km: e.target.value})}
+                      className="input-field"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Km Percorsi</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      value={editingOre.km_percorsi}
+                      onChange={(e) => setEditingOre({...editingOre, km_percorsi: e.target.value})}
+                      className="input-field"
+                    />
+                  </div>
+                </div>
+              )}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descrizione Attività</label>
+                <textarea
+                  value={editingOre.descrizione_attivita}
+                  onChange={(e) => setEditingOre({...editingOre, descrizione_attivita: e.target.value})}
+                  className="input-field"
+                  rows="2"
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <button type="button" onClick={() => setShowEditOreModal(false)} className="btn-secondary">Annulla</button>
+                <button type="submit" className="btn-primary">Salva</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -351,3 +351,125 @@ exports.aggiungiCostoAggiuntivo = async (req, res) => {
     res.status(500).json({ error: 'Errore nell\'aggiunta del costo' });
   }
 };
+
+// PUT aggiorna movimento ricambio
+exports.updateMovimentoRicambio = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantita, prezzo_vendita, operatore, note } = req.body;
+
+    const result = await db.query(
+      `UPDATE movimenti_ricambi_commessa
+       SET quantita = $1, prezzo_vendita = $2, operatore = $3, note = $4
+       WHERE id = $5
+       RETURNING *`,
+      [quantita, prezzo_vendita || null, operatore || null, note || null, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Movimento non trovato' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Errore nell\'aggiornamento del movimento ricambio:', error);
+    res.status(500).json({ error: 'Errore nell\'aggiornamento del movimento ricambio' });
+  }
+};
+
+// DELETE movimento ricambio (ripristina quantità magazzino)
+exports.deleteMovimentoRicambio = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prima recupera i dati del movimento per ripristinare la quantità
+    const movimentoResult = await db.query(
+      'SELECT ricambio_id, quantita FROM movimenti_ricambi_commessa WHERE id = $1',
+      [id]
+    );
+
+    if (movimentoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Movimento non trovato' });
+    }
+
+    const { ricambio_id, quantita } = movimentoResult.rows[0];
+
+    // Ripristina la quantità nel magazzino
+    await db.query(
+      'UPDATE ricambi SET quantita = quantita + $1 WHERE id = $2',
+      [quantita, ricambio_id]
+    );
+
+    // Elimina il movimento
+    await db.query('DELETE FROM movimenti_ricambi_commessa WHERE id = $1', [id]);
+
+    res.json({ message: 'Movimento eliminato e quantità ripristinata' });
+  } catch (error) {
+    console.error('Errore nell\'eliminazione del movimento ricambio:', error);
+    res.status(500).json({ error: 'Errore nell\'eliminazione del movimento ricambio' });
+  }
+};
+
+// PUT aggiorna ore lavoro
+exports.updateOreLavoro = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      data,
+      ore_ordinarie,
+      ore_straordinarie,
+      tariffa_cliente,
+      descrizione_attivita,
+      fase_lavorazione,
+      tipo_sede,
+      prezzo_km,
+      km_percorsi
+    } = req.body;
+
+    const cleanTariffaCliente = (tariffa_cliente === '' || tariffa_cliente === undefined) ? null : tariffa_cliente;
+    const cleanPrezzoKm = (prezzo_km === '' || prezzo_km === undefined) ? 0 : prezzo_km;
+    const cleanKmPercorsi = (km_percorsi === '' || km_percorsi === undefined) ? 0 : km_percorsi;
+
+    const result = await db.query(
+      `UPDATE ore_lavoro_commessa
+       SET data = $1, ore_ordinarie = $2, ore_straordinarie = $3, tariffa_cliente = $4,
+           descrizione_attivita = $5, fase_lavorazione = $6, tipo_sede = $7,
+           prezzo_km = $8, km_percorsi = $9, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $10
+       RETURNING *`,
+      [data, ore_ordinarie || 0, ore_straordinarie || 0, cleanTariffaCliente,
+       descrizione_attivita || null, fase_lavorazione || null, tipo_sede || 'sede',
+       cleanPrezzoKm, cleanKmPercorsi, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Registrazione ore non trovata' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Errore nell\'aggiornamento delle ore:', error);
+    res.status(500).json({ error: 'Errore nell\'aggiornamento delle ore' });
+  }
+};
+
+// DELETE ore lavoro
+exports.deleteOreLavoro = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await db.query(
+      'DELETE FROM ore_lavoro_commessa WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Registrazione ore non trovata' });
+    }
+
+    res.json({ message: 'Registrazione ore eliminata' });
+  } catch (error) {
+    console.error('Errore nell\'eliminazione delle ore:', error);
+    res.status(500).json({ error: 'Errore nell\'eliminazione delle ore' });
+  }
+};

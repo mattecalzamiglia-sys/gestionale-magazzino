@@ -14,4 +14,12 @@ router.post('/scarico-ricambio', commesseController.scaricoRicambio);
 router.post('/registra-ore', commesseController.registraOreLavoro);
 router.post('/costo-aggiuntivo', commesseController.aggiungiCostoAggiuntivo);
 
+// Modifica/Elimina movimenti ricambi
+router.put('/movimento-ricambio/:id', commesseController.updateMovimentoRicambio);
+router.delete('/movimento-ricambio/:id', commesseController.deleteMovimentoRicambio);
+
+// Modifica/Elimina ore lavoro
+router.put('/ore-lavoro/:id', commesseController.updateOreLavoro);
+router.delete('/ore-lavoro/:id', commesseController.deleteOreLavoro);
+
 module.exports = router;
